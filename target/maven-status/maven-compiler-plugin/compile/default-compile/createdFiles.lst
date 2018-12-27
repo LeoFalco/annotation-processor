@@ -1,0 +1,3 @@
+com\github\leofalco\annotationprocessor\EnumeratedAnnotationProcessor.class
+META-INF\services\javax.annotation.processing.Processor
+com\github\leofalco\annotationprocessor\EnumeratedAnnotationProcessor$1.class
