@@ -1,5 +1,0 @@
-com\github\leofalco\annotation\processor\ColumnDefinitionGenerator.class
-com\github\leofalco\annotation\processor\util\MensagesHelper.class
-com\github\leofalco\annotation\processor\ColumnDefinitionValidator.class
-META-INF\services\javax.annotation.processing.Processor
-com\github\leofalco\annotation\processor\ColumnDefinitionGenerator$1.class
