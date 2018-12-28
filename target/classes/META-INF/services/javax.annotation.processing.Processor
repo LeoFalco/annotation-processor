@@ -1,1 +1,2 @@
-com.github.leofalco.annotationprocessor.EnumeratedAnnotationProcessor
+com.github.leofalco.annotation.processor.ColumnDefinitionGenerator
+com.github.leofalco.annotation.processor.ColumnDefinitionValidator
