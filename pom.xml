@@ -6,8 +6,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.leofalco</groupId>
-    <artifactId>annotationprocessor</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <artifactId>annotation-processor</artifactId>
+    <version>0.0.3-SNAPSHOT</version>
 
 
     <properties>

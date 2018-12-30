@@ -1,6 +1,6 @@
 package com.github.leofalco.annotation.processor;
 
-import com.github.leofalco.annotation.processor.util.MensagesHelper;
+import com.github.leofalco.annotation.processor.util.MensagemHelper;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -26,14 +26,14 @@ import static javax.lang.model.element.Modifier.*;
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @AutoService(Processor.class) // create a service registration on META-INF
 public class ColumnDefinitionGenerator extends AbstractProcessor {
-    private MensagesHelper log;
+    private MensagemHelper log;
 
     private List<FieldSpec> fields = new ArrayList<>();
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
-        this.log = new MensagesHelper(processingEnv.getMessager());
+        this.log = new MensagemHelper(processingEnv.getMessager());
     }
 
     @Override
@@ -48,20 +48,20 @@ public class ColumnDefinitionGenerator extends AbstractProcessor {
 
             // classe que envolve o elemento
             Element classe = element.getEnclosingElement();
-            System.out.println("[INFO] Processando elemento: " + classe + "." + element);
+            log.info("Processando elemento: " + classe + "." + element);
 
             // typeMirror aponta para o tipo de element
             TypeMirror typeMirror = extractEnumTypeOfElement(element);
 
             // element aponta para a definicao da classe
             element = processingEnv.getTypeUtils().asElement(typeMirror);
-            System.out.println("[INFO] tipo descoberto: " + element);
+            log.info("Tipo descoberto: " + element);
 
             // filtra e retorna somente o nome das enums
             List<Element> enumConstants = extractEnumConstantsOfElement(element);
 
             String columnDefinition = createColumnDefinitionStament(enumConstants);
-            System.out.println("[INFO] columnDefinition: " + columnDefinition);
+            log.info("definicao gerada: " + columnDefinition);
 
             fields.add(createField(element, columnDefinition));
 

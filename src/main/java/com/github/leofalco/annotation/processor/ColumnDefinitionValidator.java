@@ -9,7 +9,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.persistence.Enumerated;
-import javax.tools.Diagnostic.Kind;
 
 import java.util.List;
 import java.util.Set;

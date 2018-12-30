@@ -4,11 +4,11 @@ import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic.Kind;
 
-public final class MensagesHelper {
+public final class MensagemHelper {
 
     private final Messager messager;
 
-    public MensagesHelper(Messager messager) {
+    public MensagemHelper(Messager messager) {
         this.messager = messager;
     }
 
@@ -22,4 +22,12 @@ public final class MensagesHelper {
                 String.format(msg, args),
                 e);
     }
+
+    public void info(String msg, Object... args) {
+        messager.printMessage(
+                Kind.NOTE,
+                String.format(msg, args));
+    }
+
+
 }
