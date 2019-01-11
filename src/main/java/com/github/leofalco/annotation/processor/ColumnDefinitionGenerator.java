@@ -9,17 +9,21 @@ import com.squareup.javapoet.TypeSpec;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import static com.github.leofalco.annotation.processor.util.Util.createColumnDefinitionStament;
+import static com.github.leofalco.annotation.processor.util.Util.extractEnumConstantsOfElement;
 import static javax.lang.model.element.Modifier.*;
 
 @SupportedAnnotationTypes("javax.persistence.Enumerated")
@@ -28,7 +32,9 @@ import static javax.lang.model.element.Modifier.*;
 public class ColumnDefinitionGenerator extends AbstractProcessor {
     private MensagemHelper log;
 
-    private List<FieldSpec> fields = new ArrayList<>();
+    // elemento  e definicao
+    private Map<Element, FieldSpec> fields = new HashMap<>();
+
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -41,10 +47,7 @@ public class ColumnDefinitionGenerator extends AbstractProcessor {
         if (annotations.isEmpty())
             return false;
 
-        TypeElement typeElement = processingEnv.getElementUtils().getTypeElement("javax.persistence.Enumerated");
-        Set<? extends Element> elementsAnnotatedWithEnumerated = roundEnv.getElementsAnnotatedWith(typeElement);
-
-        for (Element element : elementsAnnotatedWithEnumerated) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(Enumerated.class)) {
 
             // classe que envolve o elemento
             Element classe = element.getEnclosingElement();
@@ -57,18 +60,20 @@ public class ColumnDefinitionGenerator extends AbstractProcessor {
             element = processingEnv.getTypeUtils().asElement(typeMirror);
             log.info("Tipo descoberto: " + element);
 
+
             // filtra e retorna somente o nome das enums
             List<Element> enumConstants = extractEnumConstantsOfElement(element);
 
             String columnDefinition = createColumnDefinitionStament(enumConstants);
             log.info("definicao gerada: " + columnDefinition);
 
-            fields.add(createField(element, columnDefinition));
+            fields.computeIfAbsent(element, e -> createField(e, columnDefinition));
+
 
         }
 
         JavaFile file = JavaFile
-                .builder("column", TypeSpec.classBuilder("Def").addModifiers(PUBLIC, FINAL).addFields(fields).build())
+                .builder("column", TypeSpec.classBuilder("Def").addModifiers(PUBLIC, FINAL).addFields(fields.values()).build())
                 .build();
 
         try {
@@ -77,6 +82,37 @@ public class ColumnDefinitionGenerator extends AbstractProcessor {
             log.fatalError(e.getMessage());
         }
 
+
+        System.out.println(processingEnv.getOptions());
+
+        if (Boolean.parseBoolean(processingEnv.getOptions().get("lint"))) {
+            for (Element element : roundEnv.getElementsAnnotatedWith(Enumerated.class)) {
+
+
+                // valida enumerated
+                Enumerated enumerated = element.getAnnotation(Enumerated.class);
+                if (enumerated == null) {
+                    log.error(element, "Necessário anotação @Enumerated em " + element);
+                } else if (!EnumType.STRING.equals(enumerated.value())) {
+                    log.error(element, "Necessário anotação @Enumerated(EnumType.STRING) em" + element);
+                }
+
+                Column column = element.getAnnotation(Column.class);
+                if (column == null) {
+                    log.error(element, "Necessário anotação @Column em " + element);
+                } else {
+
+                    String s = column.columnDefinition();
+
+                    log.info(s);
+
+                    // checar column definition
+                    //System.out.println(annotationMirror.getElementValues());
+                }
+
+
+            }
+        }
         return false;
     }
 
@@ -88,32 +124,22 @@ public class ColumnDefinitionGenerator extends AbstractProcessor {
                 .initializer("\"" + columnDefinition + "\"").build();
     }
 
-    private List<Element> extractEnumConstantsOfElement(Element element) {
-
-        // pega os campos metodos e constantes de element
-        List<? extends Element> enclosedElements = element.getEnclosedElements();
-
-        // filtra e retorna somente o nome das enums
-        return enclosedElements.stream().filter(e -> e.getKind() == ElementKind.ENUM_CONSTANT)
-                .collect(Collectors.toList());
-
-    }
 
     private TypeMirror extractEnumTypeOfElement(Element element) {
         TypeMirror typeMirror = null;
         switch (element.getKind()) {
-        case FIELD:
-            typeMirror = element.asType();
-            break;
+            case FIELD:
+                typeMirror = element.asType();
+                break;
 
-        case METHOD:
-            ExecutableElement getter = (ExecutableElement) element;
-            typeMirror = getter.getReturnType();
-            break;
+            case METHOD:
+                ExecutableElement getter = (ExecutableElement) element;
+                typeMirror = getter.getReturnType();
+                break;
 
-        default:
-            log.error(element, "@Enumerated não permitido em %s", element.getKind());
-            return null;
+            default:
+                log.error(element, "@Enumerated não permitido em %s", element.getKind());
+                return null;
         }
 
         DeclaredType genericCheck = (DeclaredType) typeMirror;
@@ -125,8 +151,5 @@ public class ColumnDefinitionGenerator extends AbstractProcessor {
         return typeMirror;
     }
 
-    private static String createColumnDefinitionStament(List<Element> values) {
-        return values.stream().map(element -> element.getSimpleName().toString())
-                .collect(Collectors.joining("', '", "enum('", "') NOT NULL DEFAULT '" + values.get(0) + "'"));
-    }
+
 }
